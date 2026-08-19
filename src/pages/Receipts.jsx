@@ -1,243 +1,134 @@
-import React, { useState } from 'react';
-import { Receipt, Download, Share2, Printer, CheckCircle, Search, X, Building2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Receipt, Search, ChevronRight } from 'lucide-react';
+import ReceiptModal from '../components/ReceiptModal';
 
-const initialReceipts = [
-  {
-    id: 'REC-2026-001',
-    tenantName: 'Rahul Patil',
-    phone: '9876543210',
-    property: 'Flat 101 (1BHK), Sai Residency',
-    month: 'August 2026',
-    amount: 12000,
-    paymentDate: '2026-08-05',
-    paymentMode: 'UPI (GPay)',
-    landlordName: 'Shiva Landlord',
-    status: 'Paid',
-  },
-  {
-    id: 'REC-2026-002',
-    tenantName: 'Kiran Kirana',
-    phone: '9988776655',
-    property: 'Shop No. 4, Market Yard',
-    month: 'August 2026',
-    amount: 25000,
-    paymentDate: '2026-08-02',
-    paymentMode: 'Bank Transfer (IMPS)',
-    landlordName: 'Shiva Landlord',
-    status: 'Paid',
-  },
-  {
-    id: 'REC-2026-003',
-    tenantName: 'Amit Sharma',
-    phone: '9822114477',
-    property: 'PG Room A-1, Hinjewadi',
-    month: 'July 2026',
-    amount: 8000,
-    paymentDate: '2026-07-04',
-    paymentMode: 'Cash',
-    landlordName: 'Shiva Landlord',
-    status: 'Paid',
-  },
-];
-
-export default function Receipts() {
-  const [receipts, setReceipts] = useState(initialReceipts);
+export default function Receipts({ profile }) {
+  const [receipts, setReceipts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedReceipt, setSelectedReceipt] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('app_receipts') || '[]');
+    setReceipts(saved);
+  }, []);
 
   const filteredReceipts = receipts.filter((r) =>
-    r.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.property.toLowerCase().includes(searchTerm.toLowerCase())
+    r.tenantName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    r.unit?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    r.month?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleWhatsAppShare = (receipt) => {
-    const text = `*RENT RECEIPT - ${receipt.id}*\n\n` +
-      `Tenant: ${receipt.tenantName}\n` +
-      `Property: ${receipt.property}\n` +
-      `Month: ${receipt.month}\n` +
-      `Amount Paid: ₹${receipt.amount.toLocaleString()}\n` +
-      `Payment Date: ${receipt.paymentDate}\n` +
-      `Payment Mode: ${receipt.paymentMode}\n` +
-      `Status: ✅ PAID\n\n` +
-      `Thank you for the payment!\n- ${receipt.landlordName}`;
-
-    window.open(`https://wa.me/91${receipt.phone}?text=${encodeURIComponent(text)}`, '_blank');
-  };
+  const totalCollectedAmount = receipts.reduce(
+    (sum, r) => sum + Number(r.amount || 0) + Number(r.electricityAmount || 0),
+    0
+  );
 
   return (
-    <div className="p-4 sm:p-6 bg-slate-50 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 font-sans pb-28">
+      <header className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-5 py-3.5 sticky top-0 z-20 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Rent Receipts ({receipts.length})</h1>
-          <p className="text-xs sm:text-sm text-slate-500">भाड्याच्या पावत्या तयार करा, डाऊनलोड करा आणि शेअर करा</p>
-        </div>
-      </div>
+          <div className="md:hidden">
+            <h1 className="text-xl font-black tracking-tight text-slate-900 leading-none">
+              Rent <span className="text-[#1e3a5f]">Receipts</span>
+            </h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+              {profile?.businessName || 'Issued Invoices & History'}
+            </p>
+          </div>
 
-      {/* Search Bar */}
-      <div className="relative mb-6">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-        <input
-          type="text"
-          placeholder="पावती क्रमांक, भाडेकरू किंवा फ्लॅट सर्च करा..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-indigo-500 shadow-sm"
-        />
-      </div>
-
-      {/* Receipts Table / List */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase border-b border-slate-100">
-              <tr>
-                <th className="px-5 py-3.5">Receipt No</th>
-                <th className="px-5 py-3.5">Tenant & Unit</th>
-                <th className="px-5 py-3.5">Rent Month</th>
-                <th className="px-5 py-3.5">Amount</th>
-                <th className="px-5 py-3.5">Date & Mode</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredReceipts.map((rec) => (
-                <tr key={rec.id} className="hover:bg-slate-50/80 transition">
-                  <td className="px-5 py-4 font-mono font-semibold text-indigo-600 text-xs">
-                    {rec.id}
-                  </td>
-                  <td className="px-5 py-4">
-                    <p className="font-bold text-slate-800">{rec.tenantName}</p>
-                    <p className="text-xs text-slate-400">{rec.property}</p>
-                  </td>
-                  <td className="px-5 py-4 font-medium text-slate-700">
-                    {rec.month}
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className="font-bold text-emerald-600">₹{rec.amount.toLocaleString()}</span>
-                  </td>
-                  <td className="px-5 py-4 text-xs">
-                    <p className="text-slate-700">{rec.paymentDate}</p>
-                    <p className="text-slate-400">{rec.paymentMode}</p>
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => setSelectedReceipt(rec)}
-                        className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleWhatsAppShare(rec)}
-                        className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition"
-                        title="Share on WhatsApp"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Printable Receipt Modal */}
-      {selectedReceipt && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-in fade-in zoom-in-95">
-            
-            {/* Modal Actions */}
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Official Rent Receipt</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handlePrint}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  Print / PDF
-                </button>
-                <button
-                  onClick={() => setSelectedReceipt(null)}
-                  className="text-slate-400 hover:text-slate-600 p-1"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Printable Receipt Card Body */}
-            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 bg-white space-y-4" id="printable-area">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-xl font-black text-slate-800 tracking-tight">RENT RECEIPT</h2>
-                  <p className="text-xs font-mono text-slate-400 mt-0.5">Receipt No: {selectedReceipt.id}</p>
-                </div>
-                <div className="text-right">
-                  <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full">
-                    <CheckCircle className="w-3.5 h-3.5" /> PAID
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-100">
-                <div>
-                  <p className="text-slate-400 font-medium">Tenant Name:</p>
-                  <p className="font-bold text-slate-800 text-sm mt-0.5">{selectedReceipt.tenantName}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 font-medium">For Rent Month:</p>
-                  <p className="font-bold text-slate-800 text-sm mt-0.5">{selectedReceipt.month}</p>
-                </div>
-              </div>
-
-              <div className="text-xs">
-                <p className="text-slate-400 font-medium">Rented Property:</p>
-                <p className="font-semibold text-slate-700 mt-0.5">{selectedReceipt.property}</p>
-              </div>
-
-              <div className="bg-slate-50 p-4 rounded-xl flex justify-between items-center my-3">
-                <div>
-                  <p className="text-xs text-slate-400">Total Amount Received</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Paid via {selectedReceipt.paymentMode}</p>
-                </div>
-                <p className="text-2xl font-black text-emerald-600">₹{selectedReceipt.amount.toLocaleString()}</p>
-              </div>
-
-              <div className="flex justify-between items-end pt-4 border-t border-slate-100 text-xs">
-                <div>
-                  <p className="text-slate-400">Date of Payment:</p>
-                  <p className="font-medium text-slate-700">{selectedReceipt.paymentDate}</p>
-                </div>
-                <div className="text-right">
-                  <p className="border-b border-slate-400 pb-1 text-slate-800 font-semibold">{selectedReceipt.landlordName}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Landlord Signature</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Modal Share on WhatsApp */}
-            <div className="mt-4 pt-2">
-              <button
-                onClick={() => handleWhatsAppShare(selectedReceipt)}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm transition"
-              >
-                <Share2 className="w-4 h-4" />
-                <span>Send Receipt on WhatsApp</span>
-              </button>
-            </div>
-
+          <div className="hidden md:block">
+            <h1 className="text-xl font-black tracking-tight text-slate-900 leading-none">
+              Rent Receipts & Invoices
+            </h1>
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">
+              Manage and print issued tenant receipts
+            </p>
           </div>
         </div>
-      )}
+
+        <span className="px-3 py-1 bg-[#1e3a5f]/10 text-[#1e3a5f] rounded-full text-xs font-bold">
+          {receipts.length} Total Issued
+        </span>
+      </header>
+
+      <main className="p-4 space-y-4 max-w-md md:max-w-4xl mx-auto">
+        <div className="bg-white rounded-[32px] p-5 border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Invoices Value</p>
+            <h2 className="text-2xl font-black text-slate-900 mt-0.5">₹{totalCollectedAmount.toLocaleString()}</h2>
+          </div>
+          <div className="w-11 h-11 rounded-2xl bg-[#1e3a5f]/10 border border-[#1e3a5f]/20 text-[#1e3a5f] flex items-center justify-center font-bold">
+            <Receipt className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="relative">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by tenant name, unit or month..."
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200/80 rounded-2xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#1e3a5f]"
+          />
+        </div>
+
+        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              Issued Receipts ({filteredReceipts.length})
+            </h3>
+            <span className="text-[10px] font-bold text-slate-400">Tap to view receipt</span>
+          </div>
+
+          {filteredReceipts.length === 0 ? (
+            <div className="text-center py-8">
+              <Receipt className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-xs font-bold text-slate-700">No receipts found.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {filteredReceipts.map((rcpt) => {
+                const totalAmt = Number(rcpt.amount || 0) + Number(rcpt.electricityAmount || 0);
+                return (
+                  <div
+                    key={rcpt.id}
+                    onClick={() => setSelectedReceipt(rcpt)}
+                    className="bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/60 flex items-center justify-between hover:bg-slate-100/70 transition cursor-pointer active:scale-[0.99]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#1e3a5f]/10 text-[#1e3a5f] border border-[#1e3a5f]/20 flex items-center justify-center font-bold">
+                        <Receipt className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900">{rcpt.tenantName}</h4>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">
+                          {rcpt.unit} • <span className="text-[#1e3a5f] font-semibold">{rcpt.month}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <p className="text-sm font-black text-emerald-600">₹{totalAmt.toLocaleString()}</p>
+                        <p className="text-[10px] text-slate-400 font-medium">{rcpt.date}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </main>
+
+      <ReceiptModal
+        isOpen={!!selectedReceipt}
+        receipt={selectedReceipt}
+        landlordProfile={profile}
+        onClose={() => setSelectedReceipt(null)}
+      />
     </div>
   );
 }

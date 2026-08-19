@@ -1,77 +1,80 @@
-import React, { useState, useEffect } from 'react';
-import { Zap, Calculator, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Zap } from 'lucide-react';
 
-export default function ElectricityCalculator({ onAddBill }) {
+export default function ElectricityCalculator({ onCalculate }) {
   const [prevReading, setPrevReading] = useState('');
   const [currReading, setCurrReading] = useState('');
-  const [rate, setRate] = useState(10); // डिफॉल्ट रेट १० रुपये
-  const [bill, setBill] = useState(0);
-  const [units, setUnits] = useState(0);
+  const [unitRate, setUnitRate] = useState('10');
 
-  useEffect(() => {
-    if (currReading > prevReading) {
-      const u = Number(currReading) - Number(prevReading);
-      setUnits(u);
-      setBill(u * Number(rate));
-    } else {
-      setUnits(0);
-      setBill(0);
+  const prev = Number(prevReading) || 0;
+  const curr = Number(currReading) || 0;
+  const rate = Number(unitRate) || 0;
+
+  const unitsConsumed = curr > prev ? curr - prev : 0;
+  const totalBill = unitsConsumed * rate;
+
+  const handleApply = () => {
+    if (onCalculate) {
+      onCalculate(totalBill);
     }
-  }, [prevReading, currReading, rate]);
+  };
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
-      <div className="flex items-center gap-2 mb-4">
-        <Zap className="w-5 h-5 text-amber-600" />
-        <h3 className="text-sm font-bold text-amber-900">Electricity Bill Calculator</h3>
+    <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 mb-2 space-y-2.5">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+          <Zap className="w-3.5 h-3.5 text-amber-500" />
+          Sub-meter Calculator
+        </span>
+        <span className="text-[10px] text-slate-500 font-bold">
+          Units: <strong className="text-slate-900">{unitsConsumed}</strong>
+        </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-3 gap-2">
         <div>
-          <label className="block text-[10px] font-bold text-amber-800 uppercase">मागील रीडिंग</label>
+          <label className="block text-[10px] text-slate-500 mb-0.5">Prev</label>
           <input
             type="number"
+            placeholder="0"
             value={prevReading}
             onChange={(e) => setPrevReading(e.target.value)}
-            className="w-full mt-1 px-3 py-2 bg-white border border-amber-200 rounded-lg text-sm focus:outline-amber-500"
+            className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:border-blue-600"
           />
         </div>
         <div>
-          <label className="block text-[10px] font-bold text-amber-800 uppercase">चालू रीडिंग</label>
+          <label className="block text-[10px] text-slate-500 mb-0.5">Current</label>
           <input
             type="number"
+            placeholder="0"
             value={currReading}
             onChange={(e) => setCurrReading(e.target.value)}
-            className="w-full mt-1 px-3 py-2 bg-white border border-amber-200 rounded-lg text-sm focus:outline-amber-500"
+            className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:border-blue-600"
           />
         </div>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="flex-1">
-          <label className="block text-[10px] font-bold text-amber-800 uppercase">दर (₹/Unit)</label>
+        <div>
+          <label className="block text-[10px] text-slate-500 mb-0.5">Rate/Unit</label>
           <input
             type="number"
-            value={rate}
-            onChange={(e) => setRate(e.target.value)}
-            className="w-full mt-1 px-3 py-2 bg-white border border-amber-200 rounded-lg text-sm focus:outline-amber-500"
+            value={unitRate}
+            onChange={(e) => setUnitRate(e.target.value)}
+            className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:border-blue-600"
           />
-        </div>
-        <div className="flex-1 text-right">
-          <p className="text-[10px] text-amber-700 font-bold uppercase">एकूण बिल</p>
-          <p className="text-xl font-black text-amber-900">₹{bill.toLocaleString()}</p>
         </div>
       </div>
 
-      {bill > 0 && (
+      <div className="flex items-center justify-between pt-1">
+        <span className="text-xs font-bold text-slate-800">
+          Bill: <strong className="text-blue-600">₹{totalBill}</strong>
+        </span>
         <button
-          onClick={() => onAddBill(bill)}
-          className="w-full mt-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-2"
+          type="button"
+          onClick={handleApply}
+          className="px-3 py-1 bg-[#0f172a] hover:bg-slate-800 text-white rounded-lg text-[10px] font-bold transition active:scale-95"
         >
-          <CheckCircle2 className="w-4 h-4" />
-          हे बिल रेंटमध्ये जोडा (₹{bill})
+          Apply Amount
         </button>
-      )}
+      </div>
     </div>
   );
 }

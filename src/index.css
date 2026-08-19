@@ -1,83 +1,13 @@
 @import "tailwindcss";
 
-:root {
-  color-scheme: light;
-  --page-background: #f8faff;
-  --surface-background: #ffffff;
-  --control-background: #f8fafc;
-  --primary-text: #1e293b;
-  --secondary-text: #64748b;
-  --border-color: #e2e8f0;
+body {
+  font-family: 'EB Garamond', serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8fafc;
+  color: #1e293b;
 }
 
-html.dark {
-  color-scheme: dark;
-  --page-background: #0b132b;
-  --surface-background: #1c2541;
-  --control-background: #111b36;
-  --primary-text: #f8fafc;
-  --secondary-text: #cbd5e1;
-  --border-color: #3a506b;
-}
-
-body,
-#root {
-  background-color: var(--page-background);
-  color: var(--primary-text);
-}
-
-html.dark body,
-html.dark #root,
-html.dark main {
-  background-color: var(--page-background) !important;
-  color: var(--primary-text) !important;
-}
-
-html.dark aside,
-html.dark nav,
-html.dark .bg-white {
-  background-color: var(--surface-background) !important;
-  border-color: var(--border-color) !important;
-  color: var(--primary-text) !important;
-}
-
-html.dark .bg-slate-50,
-html.dark .bg-\[\#f8faff\],
-html.dark .bg-\[\#f0f3f8\] {
-  background-color: var(--page-background) !important;
-}
-
-html.dark input,
-html.dark select,
-html.dark textarea {
-  background-color: var(--control-background) !important;
-  border-color: var(--border-color) !important;
-  color: var(--primary-text) !important;
-}
-
-html.dark input::placeholder,
-html.dark textarea::placeholder {
-  color: #94a3b8 !important;
-}
-
-html.dark h1,
-html.dark h2,
-html.dark h3,
-html.dark h4,
-html.dark .text-slate-800,
-html.dark .text-slate-900,
-html.dark .text-\[\#11294a\] {
-  color: var(--primary-text) !important;
-}
-
-html.dark .text-slate-500,
-html.dark .text-slate-600,
-html.dark .text-slate-700 {
-  color: var(--secondary-text) !important;
-}
-
-html.dark .border-slate-100,
-html.dark .border-slate-200,
-html.dark .border-slate-300 {
-  border-color: var(--border-color) !important;
+button, input, select, textarea {
+  font-family: inherit;
 }

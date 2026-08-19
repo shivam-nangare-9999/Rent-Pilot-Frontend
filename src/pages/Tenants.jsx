@@ -1,25 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Users, UserPlus, Phone, Home, 
-  ChevronRight, Search, PlusCircle 
-} from 'lucide-react';
+import { Users, Plus, Search, ChevronRight, Home } from 'lucide-react';
 import AddTenantModal from '../components/AddTenantModal';
-import { useTranslation } from '../context/LanguageContext';
 
 export default function Tenants() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-
   const [tenants, setTenants] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterTab, setFilterTab] = useState('ALL');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('app_tenants');
-    if (saved) {
-      setTenants(JSON.parse(saved));
-    }
+    const saved = JSON.parse(localStorage.getItem('app_tenants') || '[]');
+    setTenants(saved);
   }, []);
 
   const handleAddTenantSuccess = (newTenant) => {
@@ -28,120 +21,118 @@ export default function Tenants() {
     localStorage.setItem('app_tenants', JSON.stringify(updated));
   };
 
-  const filteredTenants = tenants.filter((tenant) =>
-    tenant.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tenant.unit?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tenant.phone?.includes(searchQuery)
-  );
+  const filteredTenants = tenants.filter((tenant) => {
+    const matchesSearch =
+      tenant.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tenant.unit?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tenant.phone?.includes(searchQuery);
+
+    if (filterTab === 'PAID') return matchesSearch && tenant.status === 'Paid';
+    if (filterTab === 'DUE') return matchesSearch && tenant.status !== 'Paid';
+    return matchesSearch;
+  });
 
   return (
-    <div className="min-h-screen bg-[#f8faff] text-slate-800 font-sans pb-28">
-      {/* Top Header */}
-      <div className="bg-white px-5 pt-6 pb-4 flex items-center justify-between border-b border-slate-100 sticky top-0 z-20">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-full bg-[#11294a] flex items-center justify-center text-white shadow-sm">
-            <Users className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-[#11294a]">{t('tenants') || 'Tenants'}</h1>
-            <p className="text-xs text-slate-400 font-medium">{tenants.length} Total Registered</p>
-          </div>
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-28">
+      <header className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-5 py-3.5 sticky top-0 z-20 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-black tracking-tight text-slate-900 leading-none">
+            All <span className="text-[#1e3a5f]">Tenants</span>
+          </h1>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+            {tenants.length} Total Registered
+          </p>
         </div>
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-1.5 bg-[#11294a] hover:bg-[#0a1e3b] text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow transition active:scale-95"
+          className="bg-[#1e3a5f] hover:bg-[#162b47] text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-[#1e3a5f]/20 active:scale-95 transition"
         >
-          <UserPlus className="w-4 h-4" />
-          <span>{t('addTenant') || '+ Tenant'}</span>
+          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <span>Add Tenant</span>
         </button>
-      </div>
+      </header>
 
-      <div className="p-4 space-y-4 max-w-lg mx-auto">
-        
-        {/* Search Bar */}
+      <main className="p-4 space-y-4 max-w-md mx-auto">
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search tenant by name, room or phone..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#11294a] shadow-sm"
+            placeholder="Search by name, room or phone..."
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200/80 rounded-2xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#1e3a5f]"
           />
         </div>
 
-        {/* Tenant Cards List */}
-        {filteredTenants.length === 0 ? (
-          <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center space-y-3 shadow-sm">
-            <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
-              <Users className="w-6 h-6" />
-            </div>
-            <p className="text-xs font-bold text-slate-600">कोणतेही भाडेकरू सापडले नाहीत.</p>
+        <div className="flex gap-2 text-xs font-bold">
+          {['ALL', 'DUE', 'PAID'].map((tab) => (
             <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="px-4 py-2 bg-[#11294a] text-white text-xs font-bold rounded-xl shadow-sm"
+              key={tab}
+              onClick={() => setFilterTab(tab)}
+              className={`px-4 py-1.5 rounded-xl transition ${
+                filterTab === tab
+                  ? 'bg-[#1e3a5f] text-white shadow-xs'
+                  : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
+              }`}
             >
-              + पहिला भाडेकरू जोडा
+              {tab === 'ALL' ? 'All' : tab === 'DUE' ? 'Pending (Due)' : 'Paid'}
             </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredTenants.map((tenant) => (
-              <div
-                key={tenant.id}
-                onClick={() => navigate(`/tenants/${tenant.id}`)}
-                className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-[#11294a] hover:shadow-md transition active:scale-[0.99]"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-full bg-[#0a1e3b] text-white flex items-center justify-center font-bold text-base uppercase shadow-inner flex-shrink-0">
-                    {tenant.name ? tenant.name.substring(0, 2) : 'TN'}
-                  </div>
+          ))}
+        </div>
 
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 leading-tight">
-                      {tenant.name}
-                    </h3>
+        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+            Directory ({filteredTenants.length})
+          </h3>
 
-                    <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 font-medium">
-                      <span className="flex items-center gap-1 font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
-                        <Home className="w-3 h-3 text-slate-500" />
-                        {tenant.unit}
-                      </span>
-                      <span>•</span>
-                      <span>₹{tenant.rent}/mo</span>
+          {filteredTenants.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-xs font-bold text-slate-700">No tenants found.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {filteredTenants.map((tenant) => {
+                const isPaid = tenant.status === 'Paid';
+                return (
+                  <div
+                    key={tenant.id}
+                    onClick={() => navigate(`/tenants/${tenant.id}`)}
+                    className="bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/60 flex items-center justify-between hover:bg-slate-100/70 transition cursor-pointer active:scale-[0.99]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#1e3a5f]/10 text-[#1e3a5f] border border-[#1e3a5f]/20 flex items-center justify-center font-bold text-xs">
+                        {tenant.name ? tenant.name.substring(0, 2).toUpperCase() : 'TN'}
+                      </div>
+
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900">{tenant.name}</h4>
+                        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mt-0.5">
+                          <span className="font-semibold text-slate-700 flex items-center gap-1">
+                            <Home className="w-3 h-3 text-slate-400" />
+                            {tenant.unit}
+                          </span>
+                          <span>•</span>
+                          <span>₹{tenant.rent}/mo</span>
+                        </div>
+                      </div>
                     </div>
 
-                    {tenant.phone && (
-                      <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
-                        <Phone className="w-3 h-3" />
-                        {tenant.phone}
-                      </p>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${isPaid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'}`}>
+                        {isPaid ? 'PAID' : 'DUE'}
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </div>
                   </div>
-                </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </main>
 
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
-                      tenant.status === 'Paid'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-rose-50 text-rose-600 border border-rose-200'
-                    }`}
-                  >
-                    {tenant.status === 'Paid' ? 'PAID' : 'DUE'}
-                  </span>
-
-                  <ChevronRight className="w-5 h-5 text-slate-400" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-      </div>
-
-      {/* Add Tenant Modal */}
       <AddTenantModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
